@@ -45,7 +45,12 @@ DEFAULT_LAYERS = [("None", "None", "None"),
           ("Cameras", "Cameras", "Cameras"),
           ("Walls", "Walls", "Walls")]
 
-DEFAULT_INPUT = ("Left", "LEFT_ARROW")
+DEFAULT_INPUT = [("Left", "LEFT_ARROW"),
+                 ("Right", "RIGHT_ARROW"),
+                 ("Up", "UP_ARROW"),
+                 ("Down", "DOWN_ARROW"),
+                 ("Fire", "LEFT_CTRL"),
+                 ("Jump", "SPACE")]
 
 BGEE_OBJECT_TYPES = [("Object", "Object", "Object"),
           ("Prefab", "Prefab", "Prefab")]

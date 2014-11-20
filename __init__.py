@@ -122,10 +122,8 @@ class LoadGameEditor(bpy.types.Operator):
             bpy.utils.register_class(bgee_tagslayers.UpdateTags)
             bpy.utils.register_class(bgee_tagslayers.GameEditorTagsPanel)
             # Registering input operators/panels
-            ''' TODO: WHEN INPUT WAS FINISHED
-            bpy.utils.register_class(bgee_input.InputGroup)
+            bpy.utils.register_class(bgee_input.CreateInputKey)
             bpy.utils.register_class(bgee_input.CreateInputGroup)
-            '''
             bpy.utils.register_class(bgee_input.GameEditorInputPanel)
             # Registering entity operators/panels
             bpy.utils.register_class(bgee_entity.GameEditorEntityPanel)
@@ -177,10 +175,10 @@ class CreateGameManager(bpy.types.Operator):
         bgee_tagslayers.update_layers(ao)
 
         # Inputs
-        ''' TODO: CREATE A COLLECTION OF COLLECTIONS OF INPUTKEY
         bpy.utils.register_class(bgee_input.InputKey)
-        bpy.types.Object.currentInputs = CollectionProperty(type=bpy.types.IntProperty)
-        '''
+        bpy.utils.register_class(bgee_input.InputGroup)
+        bpy.types.Object.currentInputs = CollectionProperty(type=bgee_input.InputGroup)
+        bgee_input.reset_inputs(ao)
         
         '''
         bpy.types.Object.BgeeComponentType = EnumProperty(items = bgee_config.bgeeComponentTypes, name = "Type")

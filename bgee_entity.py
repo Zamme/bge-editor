@@ -25,34 +25,19 @@ class GameEditorEntityPanel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
     bl_category = "Entity"
-    
-    entityLocation = (True,True,True)
-    stringObjectsNames = "Selected objects:"
-    
+        
     def draw(self, context):
         layout = self.layout
         row = layout.row(align=True)
+        row.label(text="Entities selected:")
+        for ob in context.selected_objects:
+            row = layout.row(align=True)
+            row.prop(ob, "name")
+        
+        '''
+        row = layout.row(align=True)
         if (context.selected_objects):
-            if (len(context.selected_objects) > 1): #Check all properties
-                #TODO: add timer to avoid the check in every redraw
-                '''
-                self.stringObjectsNames = "Selected objects:"
-                self.entityLocation = (True,True,True) # For location
-                for ob in context.selected_objects:
-                    self.stringObjectsName += (" " + ob.name + ",")
-                    # Location
-                    if (context.selected_objects[0].location.x != ob.location.x):
-                        self.entityLocation[0] = False
-                    if (context.selected_objects[0].location.y != ob.location.y):
-                        self.entityLocation[1] = False
-                    if (context.selected_objects[0].location.z != ob.location.z):
-                        self.entityLocation[2] = False
-                    #TODO: When all the selected objects have the same (or not) index location... 
-                row.label(text=stringObjectsNames)                      
-                '''
-                pass   
-            else:
-                ''' TODO: FIX ENTITY PROPERTIES
+            if (len(context.selected_objects) == 1): #Check all properties
                 row.prop(context.active_object, "GmActive")
                 row.prop(context.active_object, "name")
                 row = layout.row(align=True)
@@ -75,7 +60,8 @@ class GameEditorEntityPanel(bpy.types.Panel):
                 #TODO: convert euler to angle
                 context.screen.EntityRotation = context.active_object.rotation_euler
                 context.screen.EntityScale = context.active_object.scale
-                '''
-                pass
+            else:
+                pass   
         else:
             row.label(text="No object selected")
+        '''

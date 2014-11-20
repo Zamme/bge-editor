@@ -19,10 +19,22 @@
 import bpy
 from . import bgee_config
 
+def reset_inputs(gm):
+    gm.currentInputs.clear()
+    newInputGroup = gm.currentInputs.add()
+    newInputGroup.inputGroupName = "Input1"
+    for inp in bgee_config.DEFAULT_INPUT:
+        newInput = newInputGroup.groups.add()
+        newInput.inputName = inp[0]
+        newInput.keyRef = inp[1]
+        
 class InputKey(bpy.types.PropertyGroup):
-    name = bpy.props.StringProperty(name="Name", default="Key ref")
-    keyRef = bpy.props.StringProperty(name="Key", default="")
+    inputName = bpy.props.StringProperty(name="Name", default="INPUTNAME")
+    keyRef = bpy.props.StringProperty(name="Key", default="KEYREF")
     
+class InputGroup(bpy.types.PropertyGroup):
+    inputGroupName = bpy.props.StringProperty(name="Group", default="Input")
+    groups = bpy.props.CollectionProperty(type=InputKey)
     
 class GameEditorInputPanel(bpy.types.Panel):
     bl_idname = "gamemaker_input_panel"
@@ -32,37 +44,41 @@ class GameEditorInputPanel(bpy.types.Panel):
     bl_category = "Input"
             
     def draw(self, context):
+        gm = context.blend_data.objects["GameManager"]
         layout = self.layout
-        ''' TODO: FIX INPUTS PANEL
-        for inp in context.screen.GmInputs:
+        for groupId,inpGroup in enumerate(gm.currentInputs):
             row = layout.row(align=True)
             box = row.box()
             rowbox = box.row(align=True)
-            rowbox.prop(inp, "name")
+            rowbox.prop(inpGroup, "inputGroupName")
+            for inp in inpGroup.groups:
+                rowbox = box.row(align=True)
+                rowbox.prop(inp, "inputName")
+                rowbox.prop(inp, "keyRef")
             rowbox = box.row(align=True)
-            rowbox.prop(inp, "left")
-            rowbox = box.row(align=True)
-            rowbox.prop(inp, "right")
-            rowbox = box.row(align=True)
-            rowbox.prop(inp, "up")
-            rowbox = box.row(align=True)
-            rowbox.prop(inp, "down")
-            rowbox = box.row(align=True)
-            rowbox.prop(inp, "jump")
-            rowbox = box.row(align=True)
-            rowbox.prop(inp, "fire1")
-        '''
+            rowbox.operator("bgee.create_inputkey", "Add key").ig=groupId
+        
         row = layout.row(align=True)
-        row.operator("bgee.create_inputgroup", "Add")
+        row.operator("bgee.create_inputgroup", "Add Input Group")
 
+class CreateInputKey(bpy.types.Operator):
+    bl_idname = "bgee.create_inputkey"
+    bl_label = ""
+    ig = bpy.props.IntProperty()
+    
+    def execute(self, context):
+        gm = context.blend_data.objects["GameManager"]
+        newInputKey = gm.currentInputs[self.ig].groups.add()
+        
+        return {"FINISHED"}
+    
 class CreateInputGroup(bpy.types.Operator):
     bl_idname = "bgee.create_inputgroup"
     bl_label = ""
     
     def execute(self, context):
-        ''' TODO: FIX INPUT CREATION
-        nGroup = context.screen.bgeeInputs.add()
-        nGroup.name = (nGroup.name + str(len(context.screen.bgeeInputs)))
-        '''
+        gm = context.blend_data.objects["GameManager"]
+        newInputGroup = gm.currentInputs.add()
+        
         return {"FINISHED"}
 
