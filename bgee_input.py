@@ -19,15 +19,11 @@
 import bpy
 from . import bgee_config
 
-class InputGroup(bpy.types.PropertyGroup):
-    name = bpy.props.StringProperty(name="Name", default=bgee_config.INPUT_GROUP_NAME)
-    left = bpy.props.StringProperty(name="Left", default="LEFT_ARROW")
-    right = bpy.props.StringProperty(name="Right", default="RIGHT_ARROW")
-    up = bpy.props.StringProperty(name="Up", default="UP_ARROW")
-    down = bpy.props.StringProperty(name="Down", default="DOWN_ARROW")
-    fire1 = bpy.props.StringProperty(name="Fire1", default="LEFT_CTRL")
-    jump = bpy.props.StringProperty(name="Jump", default="SPACE")
-
+class InputKey(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty(name="Name", default="Key ref")
+    keyRef = bpy.props.StringProperty(name="Key", default="")
+    
+    
 class GameEditorInputPanel(bpy.types.Panel):
     bl_idname = "gamemaker_input_panel"
     bl_label = "Input"

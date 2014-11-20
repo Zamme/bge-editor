@@ -45,12 +45,14 @@ DEFAULT_LAYERS = [("None", "None", "None"),
           ("Cameras", "Cameras", "Cameras"),
           ("Walls", "Walls", "Walls")]
 
+DEFAULT_INPUT = ("Left", "LEFT_ARROW")
+
 BGEE_OBJECT_TYPES = [("Object", "Object", "Object"),
           ("Prefab", "Prefab", "Prefab")]
 
 BGEE_TRIGGER_TYPES = [("Near", "Near", "Near"),
                     ("Radar", "Radar", "Radar")]
-                    
+
 bgeeComponentTypes = [("Physics", "Physics", "Physics"),
         ("Effects", "Effects", "Effects"),
         ("Motor", "Motor", "Motor"),

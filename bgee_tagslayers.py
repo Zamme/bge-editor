@@ -20,6 +20,58 @@ import bpy
 from . import bgee_config
 from bpy.props import *
 
+
+# Tags classes/functions
+def reset_tags(gm):
+    gm.currentTags.clear()
+    for tag in bgee_config.DEFAULT_TAGS:
+        newTag = gm.currentTags.add()
+        newTag.first = tag[0]
+        newTag.second = tag[1]
+        newTag.third = tag[2]
+    #print("Reset tags:", gm.currentTags)
+
+def update_tags(gm):
+    tags = list()
+    tags.clear()
+    for tag in gm.currentTags:
+        tags.append((tag.first, tag.second, tag.third))
+    bpy.types.Object.Tags = EnumProperty(items = tags)
+    #print("update tags:", tags)
+    gm.Tags = "None"
+    
+class TagItem(bpy.types.PropertyGroup):
+    first = bpy.props.StringProperty(name="")
+    second = bpy.props.StringProperty(name="")
+    third = bpy.props.StringProperty(name="")
+# END Tags classes/functions
+
+# Layers classes/functions
+def reset_layers(gm):
+    gm.currentLayers.clear()
+    for lay in bgee_config.DEFAULT_LAYERS:
+        newLayer = gm.currentLayers.add()
+        newLayer.first = lay[0]
+        newLayer.second = lay[1]
+        newLayer.third = lay[2]
+    #print("Reset newLayer:", gm.currentLayers)
+
+def update_layers(gm):
+    layers = list()
+    layers.clear()
+    for lay in gm.currentLayers:
+        layers.append((lay.first, lay.second, lay.third))
+    bpy.types.Object.Layers = EnumProperty(items = layers)
+    #print("update layers:", layers)
+    gm.Layers = "None"
+    
+class LayerItem(bpy.types.PropertyGroup):
+    first = bpy.props.StringProperty(name="")
+    second = bpy.props.StringProperty(name="")
+    third = bpy.props.StringProperty(name="")
+# END Layers classes/functions
+
+
 class GameEditorTagsPanel(bpy.types.Panel):
     bl_idname = "gamemaker_tags_panel"
     bl_label = "Tags & Layers"
@@ -36,63 +88,93 @@ class GameEditorTagsPanel(bpy.types.Panel):
         row.label(text="Tags")
         row = layout.row(align=True)
         row.operator("bgee.add_tag", "Add")
-        ''' TODO: FIX TAGS MANAGER
         row = layout.row(align=True)
         box = row.box()
-        for tag in gm.tags:
+        for id,tag in enumerate(gm.currentTags):
+            if (tag.first == "None"):
+                continue
             row = box.row(align=True)
-            row.label(text=tag[0])
-            row.operator("bgee.edit_tag", "Edit")
-            row.operator("bgee.delete_tag", icon="X")
-        '''
+            row.label(text=tag.first)
+            row.operator("bgee.edit_tag", "Edit").tagID=id
+            row.operator("bgee.delete_tag", icon="X").tagID=id
+            
         # LAYERS
         row = layout.row(align=True)
         row.label(text="Layers")
         row = layout.row(align=True)
         row.operator("bgee.add_layer", "Add")
-        ''' TODO: FIX LAYERS MANAGER
         row = layout.row(align=True)
         box = row.box()
-        for layer in layers:
+        for id,lay in enumerate(gm.currentLayers):
+            if (lay.first == "None"):
+                continue
             row = box.row(align=True)
-            row.label(text=layer[0])
-            row.operator("bgee.edit_layer", "Edit")
-            row.operator("bgee.delete_layer", icon="X")
-        '''
+            row.label(text=lay.first)
+            row.operator("bgee.edit_layer", "Edit").layerID=id
+            row.operator("bgee.delete_layer", icon="X").layerID=id
 
 class GameEditorEditTag(bpy.types.Operator):
     bl_idname = "bgee.edit_tag"
     bl_label = "Edit Tag"
     
+    tagID = IntProperty()
+    
+    tagName = StringProperty(name="Tag Name")
+    
     def execute(self, context):
-        print("Editing tag")
+        gm = context.blend_data.objects["GameManager"]
+        message = "Tag editted: '%s'" % (self.tagName)
+        self.report({'INFO'}, message)
+        selectedTag = gm.currentTags[self.tagID]
+        selectedTag.first, selectedTag.second, selectedTag.third = self.tagName, self.tagName, self.tagName
+        update_tags(gm)
         
-        return {"FINISHED"}
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
 
 class GameEditorDeleteTag(bpy.types.Operator):
     bl_idname = "bgee.delete_tag"
     bl_label = ""
+    tagID = IntProperty()
     
     def execute(self, context):
-        print("Deleting tag")
+        print("Deleting tag", self.tagID)
+        gm = context.blend_data.objects["GameManager"]
+        gm.currentTags.remove(self.tagID)
         
         return {"FINISHED"}
 
 class GameEditorEditLayer(bpy.types.Operator):
     bl_idname = "bgee.edit_layer"
     bl_label = "Edit Tag"
+    layerID = IntProperty()
+        
+    layerName = StringProperty(name="Layer Name")
     
     def execute(self, context):
-        print("Editing layer")
+        gm = context.blend_data.objects["GameManager"]
+        message = "Layer editted: '%s'" % (self.layerName)
+        self.report({'INFO'}, message)
+        selectedLayer = gm.currentLayers[self.layerID]
+        selectedLayer.first, selectedLayer.second, selectedLayer.third = self.layerName, self.layerName, self.layerName
+        update_layers(gm)
         
-        return {"FINISHED"}
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
 
 class GameEditorDeleteLayer(bpy.types.Operator):
     bl_idname = "bgee.delete_layer"
     bl_label = ""
+    layerID = IntProperty()
     
     def execute(self, context):
-        print("Deleting layer")
+        print("Deleting layer", self.layerID)
+        gm = context.blend_data.objects["GameManager"]
+        gm.currentLayers.remove(self.layerID)
         
         return {"FINISHED"}
 
@@ -103,10 +185,12 @@ class AddTag(bpy.types.Operator):
     newTag = StringProperty(name="New Tag")
     
     def execute(self, context):
+        gm = context.blend_data.objects["GameManager"]
         message = "Tag added: '%s'" % (self.newTag)
         self.report({'INFO'}, message)
-        tags.append((self.newTag, self.newTag, self.newTag))
-        bpy.ops.bgee.update_tags()
+        createdTag = gm.currentTags.add()
+        createdTag.first, createdTag.second, createdTag.third = self.newTag, self.newTag, self.newTag
+        update_tags(gm)
         
         return {'FINISHED'}
 
@@ -120,29 +204,35 @@ class AddLayer(bpy.types.Operator):
     newLayer = StringProperty(name="New Layer")
     
     def execute(self, context):
+        gm = context.blend_data.objects["GameManager"]
         message = "Layer added: '%s'" % (self.newLayer)
         self.report({'INFO'}, message)
-        layers.append((self.newLayer, self.newLayer, self.newLayer))
-        bpy.ops.bgee.update_layers()
+        createdLayer = gm.currentLayers.add()
+        createdLayer.first, createdLayer.second, createdLayer.third = self.newLayer, self.newLayer, self.newLayer
+        update_layers(gm)
         
         return {'FINISHED'}
 
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)
 
+''' Use update_layers '''
 class UpdateLayers(bpy.types.Operator):
     bl_idname="bgee.update_layers"
     bl_label = 'Update Layers'
 
     def execute(self, context):
-        bpy.types.Object.GmLayer = EnumProperty(items = layers, name = "Layer")
+        gm = context.blend_data.objects["GameManager"]
+        bpy.types.Object.GmLayer = EnumProperty(items = gm.currentLayers, name = "Layer")
         return {'FINISHED'}
-    
+
+''' Use update_tags '''
 class UpdateTags(bpy.types.Operator):
     bl_idname="bgee.update_tags"
     bl_label = 'Update Tags'
 
     def execute(self, context):
-        bpy.types.Object.Tag = EnumProperty(items = tags, name = "Tag")
+        gm = context.blend_data.objects["GameManager"]
+        bpy.types.Object.Tag = EnumProperty(items = gm.currentTags, name = "Tag")
         return {'FINISHED'}
     

@@ -122,8 +122,10 @@ class LoadGameEditor(bpy.types.Operator):
             bpy.utils.register_class(bgee_tagslayers.UpdateTags)
             bpy.utils.register_class(bgee_tagslayers.GameEditorTagsPanel)
             # Registering input operators/panels
+            ''' TODO: WHEN INPUT WAS FINISHED
             bpy.utils.register_class(bgee_input.InputGroup)
             bpy.utils.register_class(bgee_input.CreateInputGroup)
+            '''
             bpy.utils.register_class(bgee_input.GameEditorInputPanel)
             # Registering entity operators/panels
             bpy.utils.register_class(bgee_entity.GameEditorEntityPanel)
@@ -161,6 +163,24 @@ class CreateGameManager(bpy.types.Operator):
         # Audio
         bpy.types.Object.AudioVolume = IntProperty(name="Audio volume")
         ao.AudioVolume = bgee_config.DEFAULT_AUDIO_VOLUME
+        
+        # Tags
+        bpy.utils.register_class(bgee_tagslayers.TagItem)
+        bpy.types.Object.currentTags = CollectionProperty(type=bgee_tagslayers.TagItem)
+        bgee_tagslayers.reset_tags(ao)
+        bgee_tagslayers.update_tags(ao)
+
+        # Layers
+        bpy.utils.register_class(bgee_tagslayers.LayerItem)
+        bpy.types.Object.currentLayers = CollectionProperty(type=bgee_tagslayers.LayerItem)
+        bgee_tagslayers.reset_layers(ao)
+        bgee_tagslayers.update_layers(ao)
+
+        # Inputs
+        ''' TODO: CREATE A COLLECTION OF COLLECTIONS OF INPUTKEY
+        bpy.utils.register_class(bgee_input.InputKey)
+        bpy.types.Object.currentInputs = CollectionProperty(type=bpy.types.IntProperty)
+        '''
         
         '''
         bpy.types.Object.BgeeComponentType = EnumProperty(items = bgee_config.bgeeComponentTypes, name = "Type")
