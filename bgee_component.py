@@ -20,12 +20,12 @@ import bpy
 from . import bgee_config
 
 class ObjectComponent(bpy.types.PropertyGroup):
-    active = bpy.props.BoolProperty(name="", description="Active", default=True)
-    type = bpy.props.StringProperty(name="Component", default="Unknown")
-    script = bpy.props.StringProperty(name="Script", default="Script")
-    name = bpy.props.StringProperty(name="", default="Name")                    
-    input = bpy.props.StringProperty(name = "Input", default="Input1")
-    scriptProperties = list()
+    cActive = bpy.props.BoolProperty(name="", description="Active", default=True)
+    cType = bpy.props.StringProperty(name="Component", default="Unknown")
+    cScript = bpy.props.StringProperty(name="Script", default="Script")
+    cName = bpy.props.StringProperty(name="", default="Name")                    
+    cInput = bpy.props.StringProperty(name = "Input", default="Input1")
+    cScriptProperties = list()
     #input = bpy.props.EnumProperty(items = bgeeInputsMenu, name = "Input")
     #input = "None"
 
@@ -42,33 +42,22 @@ class GameEditorComponentsPanel(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        row = layout.row(align=True)
-        row.prop(context.screen, "bgeeComponentType")
-        row.operator("bgee.create_component", "Add")
-        for comp in context.active_object.Components:
-            row = layout.row(align=True)
-            box = row.box()
-            row = box.row(align=True)
-            row.alignment = "RIGHT"
-            row.operator("bgee.delete_component", icon="X")
-            row = box.row(align=True)
-            row.prop(comp, "active")
-            row.label(comp.type)
-            row.prop(comp, "name")
-            row = box.row(align=True)
-            row.label(bpy.path.basename(comp.script))
-            # if component is motor, add an input selector
-            if (comp.type == "Motor"):
-                row = box.row(align=True)
-                row.prop(comp, "input")
-            # Show script bgee variables from gamelogic properties
-            # TODO: show only component variables!
-            for proper in context.active_object.game.properties:
-                if (proper.name in comp.scriptProperties):
-                    print(proper.name, comp.scriptProperties)
-                    row = box.row(align=True)
-                    row.label(text=proper.name)
-                    row.prop(proper, "value")
+        #row = layout.row(align=True)
+        #row.prop(context.screen, "bgeeComponentType")
+        #row.operator("bgee.create_component", "Add")
+        for ob in context.selected_objects:
+            if (ob.hasattr("entityProps")):
+                if (ob.entityProps.components):
+                    for comp in ob.entityProps.components:
+                        row = layout.row(align=True)
+                        box = row.box()
+                        row = box.row(align=True)
+                        row.alignment = "RIGHT"
+                        row.operator("bgee.delete_component", icon="X")
+                        row = box.row(align=True)
+                        row.prop(comp, "cActive")
+                        row.label(comp.type)
+                        row.prop(comp, "cName")
                     
 
 class DeleteComponent(bpy.types.Operator):

@@ -17,7 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
-from . import bgee_config
+from . import bgee_config, bgee_component, bgee_tagslayers
 
 class GameEditorEntityPanel(bpy.types.Panel):
     bl_idname = "bgee_entity_panel"
@@ -44,12 +44,26 @@ class GameEditorEntityPanel(bpy.types.Panel):
         row = layout.row(align=True)
         row.prop(gm.entityTransform, "scale")
 
-class MultiEntityTransform(bpy.types.PropertyGroup):
-    location = bpy.props.FloatVectorProperty()
-    rotation = bpy.props.FloatVectorProperty()
-    scale = bpy.props.FloatVectorProperty()
+# START Multiselection transform methods
+def update_location(self, context):
+    gm = context.blend_data.objects["GameManager"]
+    obs = context.selected_objects
+    for ob in obs:
+        ob.location = gm.entityTransform.location
 
-def update_transform(context):
+def update_rotation(self, context):
+    gm = context.blend_data.objects["GameManager"]
+    obs = context.selected_objects
+    for ob in obs:
+        ob.rotation_euler = gm.entityTransform.rotation
+
+def update_scale(self, context):
+    gm = context.blend_data.objects["GameManager"]
+    obs = context.selected_objects
+    for ob in obs:
+        ob.scale = gm.entityTransform.scale
+
+def update_transform(context): # TODO: NOT WORKING WELL
     gm = context.blend_data.objects["GameManager"]
     obs = context.selected_objects
     if (len(obs) > 0):
@@ -62,8 +76,14 @@ def update_transform(context):
             gm.entityTransform.location[0] = obs[0].location[0]
     else:
         print("No object selected")
-    
+# END Multiselection transform methods
 
+class MultiEntityTransform(bpy.types.PropertyGroup):
+    location = bpy.props.FloatVectorProperty(update=update_location)
+    rotation = bpy.props.FloatVectorProperty(subtype="EULER", update=update_rotation)
+    scale = bpy.props.FloatVectorProperty(update=update_scale)
+
+    
 class BGEE_OT_multiselection(bpy.types.Operator):
     bl_idname = "bgee.multiselection"
     bl_label = "Entity multiselection catcher"
@@ -100,14 +120,35 @@ class BGEE_OT_multiselection(bpy.types.Operator):
     def execute(self, context):
         context.window_manager.modal_handler_add(self)
         self._updating = False
-        self._timer = context.window_manager.event_timer_add(0.5, context.window)
+        self._timer = context.window_manager.event_timer_add(0.2, context.window)
         return {'RUNNING_MODAL'}
 
     def cancel(self, context):
         context.window_manager.event_timer_remove(self._timer)
         self._timer = None
         return {'CANCELLED'}
-    
+
+# ENTITY PROPERTIES
+class EntityProperties(bpy.types.PropertyGroup):
+    active = bpy.props.BoolProperty(default=True)
+    prefab = bpy.props.BoolProperty(default=False)
+    tag = bpy.props.PointerProperty(type=bgee_tagslayers.TagItem)
+    layers = bpy.props.CollectionProperty(type=bgee_tagslayers.LayerItem)
+    components = bpy.props.CollectionProperty(type=bgee_component.ObjectComponent)
+
+# Create entity bgee properties (IT MUST BE A LIST!)
+def prepare_entity(oblist):
+    obList = oblist
+    if (obList != None):
+        for ob in obList:
+            if (ob.name != "GameManager"):
+                ob.entityProps.active = True
+                ob.entityProps.prefab = False
+                ob.entityProps.tag = "None"
+                oLayer = ob.entityProps.layers.add()
+                oLayer = "None"
+            
+
 ''' COMING SOON        
 class EntityList(bpy.types.UIList):
     

@@ -181,13 +181,22 @@ class CreateGameManager(bpy.types.Operator):
         bpy.types.Object.currentInputs = CollectionProperty(type=bgee_input.InputGroup)
         bgee_input.reset_inputs(ao)
         
-        # Entity
+        # Entity main
         bpy.utils.register_class(bgee_entity.MultiEntityTransform)
         bpy.types.Object.entityTransform = PointerProperty(type=bgee_entity.MultiEntityTransform)
-        ao.entityTransform.location, ao.entityTransform.rotation, ao.entityTransform.scale = (0,0,0), (0,0,0), (0,0,0)
+        ao.entityTransform.location, ao.entityTransform.rotation, ao.entityTransform.scale = (0,0,0), (0,0,0), (1,1,1)
         bpy.utils.register_class(bgee_entity.BGEE_OT_multiselection)
         bpy.ops.bgee.multiselection()
+        # Entity properties
+        bpy.utils.register_class(bgee_component.ObjectComponent) # Needed by EntityProperties
+        bpy.utils.register_class(bgee_entity.EntityProperties)
+        bpy.types.Object.entityProps = PointerProperty(type=bgee_entity.EntityProperties)
+        bgee_entity.prepare_entity(context.blend_data.objects)
 
+        # Components
+        bpy.utils.register_class(bgee_component.DeleteComponent)
+        bpy.utils.register_class(bgee_component.GameEditorComponentsPanel)
+        
         '''
         bpy.types.Object.BgeeComponentType = EnumProperty(items = bgee_config.bgeeComponentTypes, name = "Type")
         ao.BgeeComponentType = "Physics"
@@ -207,8 +216,8 @@ class CreateGameManager(bpy.types.Operator):
                 break
         if (not gmExists):
             bpy.ops.object.empty_add()
-            self.create_properties(context)
             bgeeManager.set_object(context.active_object)
+            self.create_properties(context)
             # can't view properties of a hidden object?
             # bgeeManager.emptyObject.hide = True 
             bgeeManager.emptyObject.Workspace = os.path.normpath((os.path.join(os.path.dirname(bpy.data.filepath), (bpy.path.basename(bpy.data.filepath)).replace(".blend", "_") + bgee_config.GAME_EDITOR_WORKSPACE_PATH)))
