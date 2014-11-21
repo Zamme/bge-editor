@@ -27,41 +27,98 @@ class GameEditorEntityPanel(bpy.types.Panel):
     bl_category = "Entity"
         
     def draw(self, context):
+        gm = context.blend_data.objects["GameManager"]
         layout = self.layout
+        # Selected entities names, location, rotation, scale
         row = layout.row(align=True)
         row.label(text="Entities selected:")
-        for ob in context.selected_objects:
-            row = layout.row(align=True)
-            row.prop(ob, "name")
-        
-        '''
         row = layout.row(align=True)
-        if (context.selected_objects):
-            if (len(context.selected_objects) == 1): #Check all properties
-                row.prop(context.active_object, "GmActive")
-                row.prop(context.active_object, "name")
-                row = layout.row(align=True)
-                row.prop(context.active_object, "GmType")
-                row = layout.row(align=True)
-                row.prop(context.active_object, "Tag")
-                row.operator("bgee.add_tag", "New")
-                row = layout.row(align=True)
-                row.prop(context.active_object, "GmLayer")
-                row.operator("bgee.add_layer", "New")
-                # Position of selected objects
-                row = layout.row(align=True)
-                row.prop(context.screen, "EntityPosition")            
-                row = layout.row(align=True)
-                row.prop(context.screen, "EntityRotation")            
-                row = layout.row(align=True)
-                row.prop(context.screen, "EntityScale")            
-                               
-                context.screen.EntityPosition = context.active_object.location
-                #TODO: convert euler to angle
-                context.screen.EntityRotation = context.active_object.rotation_euler
-                context.screen.EntityScale = context.active_object.scale
+        box = row.box()
+        for ob in context.selected_objects:
+            boxrow = box.row(align=True)
+            boxrow.label(text=ob.name)
+        row = layout.row(align=True)
+        row.prop(gm.entityTransform, "location")
+        row = layout.row(align=True)
+        row.prop(gm.entityTransform, "rotation")
+        row = layout.row(align=True)
+        row.prop(gm.entityTransform, "scale")
+
+class MultiEntityTransform(bpy.types.PropertyGroup):
+    location = bpy.props.FloatVectorProperty()
+    rotation = bpy.props.FloatVectorProperty()
+    scale = bpy.props.FloatVectorProperty()
+
+def update_transform(context):
+    gm = context.blend_data.objects["GameManager"]
+    obs = context.selected_objects
+    if (len(obs) > 0):
+        locationX, locationY, locationZ, rotationX, rotationY, rotationZ, scaleX, scaleY, scaleZ = True, True, True, True, True, True, True, True, True
+        # Location
+        for ob in obs:
+            if (obs[0].location.x != ob.location.x):
+                locationX = False
+        if (locationX):
+            gm.entityTransform.location[0] = obs[0].location[0]
+    else:
+        print("No object selected")
+    
+
+class BGEE_OT_multiselection(bpy.types.Operator):
+    bl_idname = "bgee.multiselection"
+    bl_label = "Entity multiselection catcher"
+
+    _updating = False
+    _calcs_done = False
+    _timer = None
+    nObjects = None
+
+    def selected_objects_changed(self, context):
+        currentNObjects = len(context.selected_objects)
+        if (self.nObjects is not None):
+            if (self.nObjects != currentNObjects):
+                self.nObjects = currentNObjects
+                return True
             else:
-                pass   
+                return False
         else:
-            row.label(text="No object selected")
-        '''
+            self.nObjects = currentNObjects
+            return False
+        #self._calcs_done = True
+
+    def modal(self, context, event):
+        if event.type == 'TIMER' and not self._updating:
+            self._updating = True
+            if (self.selected_objects_changed(context)):
+                update_transform(context)
+            self._updating = False
+        if self._calcs_done:
+            self.cancel(context)
+
+        return {'PASS_THROUGH'}
+
+    def execute(self, context):
+        context.window_manager.modal_handler_add(self)
+        self._updating = False
+        self._timer = context.window_manager.event_timer_add(0.5, context.window)
+        return {'RUNNING_MODAL'}
+
+    def cancel(self, context):
+        context.window_manager.event_timer_remove(self._timer)
+        self._timer = None
+        return {'CANCELLED'}
+    
+''' COMING SOON        
+class EntityList(bpy.types.UIList):
+    
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        ob = data
+        slot = item
+        ma = slot.material
+
+        if self.layout_type in {'DEFAULT', 'COMPACT'}:
+            layout.label(ob.name)
+        elif self.layout_type in {'GRID'}:
+            layout.alignment = 'CENTER'
+            layout.label("", icon_value=icon)
+'''

@@ -126,6 +126,7 @@ class LoadGameEditor(bpy.types.Operator):
             bpy.utils.register_class(bgee_input.CreateInputGroup)
             bpy.utils.register_class(bgee_input.GameEditorInputPanel)
             # Registering entity operators/panels
+            #bpy.utils.register_class(bgee_entity.EntityList)
             bpy.utils.register_class(bgee_entity.GameEditorEntityPanel)
             
             return {"FINISHED"}
@@ -180,6 +181,13 @@ class CreateGameManager(bpy.types.Operator):
         bpy.types.Object.currentInputs = CollectionProperty(type=bgee_input.InputGroup)
         bgee_input.reset_inputs(ao)
         
+        # Entity
+        bpy.utils.register_class(bgee_entity.MultiEntityTransform)
+        bpy.types.Object.entityTransform = PointerProperty(type=bgee_entity.MultiEntityTransform)
+        ao.entityTransform.location, ao.entityTransform.rotation, ao.entityTransform.scale = (0,0,0), (0,0,0), (0,0,0)
+        bpy.utils.register_class(bgee_entity.BGEE_OT_multiselection)
+        bpy.ops.bgee.multiselection()
+
         '''
         bpy.types.Object.BgeeComponentType = EnumProperty(items = bgee_config.bgeeComponentTypes, name = "Type")
         ao.BgeeComponentType = "Physics"
