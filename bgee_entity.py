@@ -142,11 +142,14 @@ def prepare_entity(oblist):
     if (obList != None):
         for ob in obList:
             if (ob.name != "GameManager"):
-                ob.entityProps.active = True
-                ob.entityProps.prefab = False
-                ob.entityProps.tag = "None"
-                oLayer = ob.entityProps.layers.add()
-                oLayer = "None"
+                if (not("entityProps" in ob.keys())):
+                    ob.entityProps.active = True
+                    ob.entityProps.prefab = False
+                    ob.entityProps.tag.first = "None"
+                    ob.entityProps.tag.second = "None"
+                    ob.entityProps.tag.third = "None"
+                    oLayer = ob.entityProps.layers.add()
+                    oLayer = "None"
             
 
 ''' COMING SOON        

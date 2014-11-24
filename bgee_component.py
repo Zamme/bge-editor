@@ -45,10 +45,24 @@ class GameEditorComponentsPanel(bpy.types.Panel):
         #row = layout.row(align=True)
         #row.prop(context.screen, "bgeeComponentType")
         #row.operator("bgee.create_component", "Add")
-        for ob in context.selected_objects:
-            if (ob.hasattr("entityProps")):
-                if (ob.entityProps.components):
-                    for comp in ob.entityProps.components:
+        if (len(context.selected_objects) > 1):
+            for ob in context.selected_objects:
+                if (ob.is_property_set("entityProps")):
+                    if (ob.entityProps.components):
+                        for comp in ob.entityProps.components:
+                            row = layout.row(align=True)
+                            box = row.box()
+                            row = box.row(align=True)
+                            row.alignment = "RIGHT"
+                            row.operator("bgee.delete_component", icon="X")
+                            row = box.row(align=True)
+                            row.prop(comp, "cActive")
+                            row.label(comp.type)
+                            row.prop(comp, "cName")
+        else:
+            if ("entityProps" in context.active_object.keys()):
+                if (context.active_object.entityProps.components):
+                    for comp in context.active_object.entityProps.components:
                         row = layout.row(align=True)
                         box = row.box()
                         row = box.row(align=True)
