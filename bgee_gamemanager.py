@@ -37,4 +37,26 @@ class GameManager():
         
     def SetLayoutReference(self,ref):
         self.gameEditorLayoutRef = ref
-        
+
+def prepare_entity(obList):
+    ''' Create entity bgee properties  '''
+    if (obList != None):
+        for ob in obList:
+            if (ob.name != "GameManager"):
+                if (not("entityProps" in ob.keys())):
+                    ob.entityProps.active = True
+                    ob.entityProps.prefab = False
+                    bpy.types.Object.bgeeTag = bpy.props.EnumProperty(items=bgee_config.bgeeCurrentTags, name="")
+                    ob.bgeeTag = "None"
+                    oLayer = ob.entityProps.layers.add()
+                    oLayer.first, oLayer.second, oLayer.third = "None", "None", "None"
+                bpy.types.Object.bgeeTag = bpy.props.EnumProperty(items=bgee_config.bgeeCurrentTags, name="")
+                bpy.types.Object.bgeeLayer = bpy.props.EnumProperty(items=bgee_config.bgeeCurrentLayers, name="")
+
+def prepare_scene(scList):
+    ''' Create scene bgee properties (IT MUST BE A LIST!) '''
+    if (scList != None):
+        for sc in scList:
+            if (not("BgeeActive" in sc.keys())):
+                sc.BgeeActive = True
+    

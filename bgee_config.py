@@ -27,6 +27,7 @@ GAME_EDITOR_WORKSPACE_PATH = "bgee_workspace"
 GAME_EDITOR_WORKSPACE_TEMPLATES_PATH = "templates"
 GAME_EDITOR_WORKSPACE_SCRIPTS_PATH = "scripts"
 INPUT_GROUP_NAME = "Input"
+SCRIPT_FILE_BEGIN = "# BGEE_Component"
 SCRIPT_SENSORS_BEGIN = "#BeginSensors"
 SCRIPT_SENSORS_END = "#EndSensors"
 GAME_EDITOR_TAB = GAME_EDITOR_LAYOUT_NAME
@@ -58,12 +59,13 @@ BGEE_OBJECT_TYPES = [("Object", "Object", "Object"),
 BGEE_TRIGGER_TYPES = [("Near", "Near", "Near"),
                     ("Radar", "Radar", "Radar")]
 
-bgeeComponentTypes = [("Physics", "Physics", "Physics"),
-        ("Effects", "Effects", "Effects"),
-        ("Motor", "Motor", "Motor"),
-        ("Animation", "Animation", "Animation")]
+bgeeComponentTypes = list() # Loaded from templates directory
 
 bgeeInputsMenu = [("None", "None", "None"),]
+
+bgeeCurrentTags = list()
+
+bgeeCurrentLayers = list()
 
 class CreateWorkspace(bpy.types.Operator):
     bl_idname="bgee.create_workspace"
@@ -99,10 +101,6 @@ class CreateWorkspace(bpy.types.Operator):
                         path_addons = os.path.join(bpy.utils.user_resource('SCRIPTS', "addons", create=False), GAME_EDITOR_ADDON_PATH)
                         path_addons = os.path.join(path_addons, GAME_EDITOR_WORKSPACE_TEMPLATES_PATH)
                         
-                        # These for testing purposes
-                        #path_addons = os.path.join(TEMP_GMTEMPLATES_PATH, GAME_EDITOR_WORKSPACE_TEMPLATES_PATH)
-                        # end for testing
-                        
                         templates = os.listdir(path_addons)
                         #print(templates)
                         for tFile in templates:
@@ -137,7 +135,27 @@ def Check_workspace_structure():
     else:
         print("Error in workspace structure")
     return state
-    
+
+def update_bgee_components():
+    try:
+        bgeeComponentTypes.clear()
+        templatesPath = os.path.join(os.path.normpath((os.path.join(os.path.dirname(bpy.data.filepath), (bpy.path.basename(bpy.data.filepath)).replace(".blend", "_") + GAME_EDITOR_WORKSPACE_PATH))), GAME_EDITOR_WORKSPACE_TEMPLATES_PATH)
+        templateFiles = os.listdir(templatesPath)
+        #print(templateFiles)
+        for tFileName in templateFiles:
+            if (tFileName.endswith(".py")):
+                tFile = open(os.path.join(templatesPath, tFileName), mode='r', buffering=1)
+                firstSentence = tFile.readline()
+                tFile.close()
+                if (SCRIPT_FILE_BEGIN in firstSentence):
+                    option = tFileName.replace(".py", "")
+                    bgeeComponentTypes.append((option, option, option))
+                    print(tFileName.replace(".py", ""), "added to components")
+    except:
+        print("Error updating components")
+    else:
+        print("Components updated")
+
 class LoadWorkspace(bpy.types.Operator):
     bl_idname="bgee.load_workspace"
     bl_label = 'Load workspace'
@@ -158,11 +176,13 @@ class LoadWorkspace(bpy.types.Operator):
                 bpy.utils.register_class(CreateWorkspace)
                 bpy.ops.bgee.create_workspace()
                 bpy.utils.unregister_class(CreateWorkspace)
+                update_bgee_components()
             else:
                 # Check workspace structure
                 if (Check_workspace_structure()):
                     # Load workspace
                     print("Loading workspace...")
+                    update_bgee_components()
                 else:
                     # Fix workspace structure
                     print("Fixing workspace structure...")

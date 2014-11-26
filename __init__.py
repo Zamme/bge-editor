@@ -24,7 +24,6 @@ bl_info = {
     "wiki_url": "http://zammedev.blogspot.com", 
     "category": "Game Engine"}
 
-#'''For release
 if "bpy" in locals():
     import imp
     imp.reload(bgee_types)
@@ -42,7 +41,6 @@ if "bpy" in locals():
     imp.reload(bgee_audio)
 else:
     from . import bgee_types, bgee_collider, bgee_component, bgee_config, bgee_data, bgee_entity, bgee_gamemanager, bgee_input, bgee_publish, bgee_tagslayers, bgee_trigger, bgee_audio #, bgee_layout
-#'''
 
 import bpy
 from bpy.props import *
@@ -97,38 +95,70 @@ class LoadGameEditor(bpy.types.Operator):
     bl_idname = "bgee.load_editor"
     bl_label = "Load Game Editor"
     
+    def load_types(self, context):
+        bpy.utils.register_class(bgee_publish.PlatformTarget)
+        bpy.utils.register_class(bgee_tagslayers.TagItem)
+        bpy.utils.register_class(bgee_tagslayers.LayerItem)
+        bpy.utils.register_class(bgee_input.InputKey)
+        bpy.utils.register_class(bgee_input.InputGroup)
+        bpy.utils.register_class(bgee_entity.MultiEntityTransform)
+        bpy.utils.register_class(bgee_component.ObjectComponent) # Needed by EntityProperties
+        bpy.utils.register_class(bgee_entity.EntityProperties)
+        bpy.types.Object.entityProps = PointerProperty(type=bgee_entity.EntityProperties)                    
+        bpy.types.Object.GameName = StringProperty(name="Game Name")
+        bpy.types.Object.Version = IntVectorProperty(name="Version")
+        bpy.types.Object.Workspace = StringProperty(name="Workspace")
+        bpy.types.Scene.BgeeActive = BoolProperty(name="")
+        bpy.types.Object.BgeeTarget = PointerProperty(type=bgee_publish.PlatformTarget)
+        bpy.types.Object.AudioVolume = IntProperty(name="Audio volume")
+        bpy.types.Object.currentTags = CollectionProperty(type=bgee_tagslayers.TagItem)
+        bpy.types.Object.currentLayers = CollectionProperty(type=bgee_tagslayers.LayerItem)
+        bpy.types.Object.currentInputs = CollectionProperty(type=bgee_input.InputGroup)
+        bpy.types.Object.tagSelected = EnumProperty(items=bgee_config.bgeeCurrentTags)
+        bpy.types.Object.entityTransform = PointerProperty(type=bgee_entity.MultiEntityTransform)
+        bpy.types.Object.bgeeTag = EnumProperty(items=bgee_config.bgeeCurrentTags, name="")
+        bpy.types.Object.bgeeLayer = EnumProperty(items=bgee_config.bgeeCurrentLayers, name="")
+        #bpy.types.Object.BgeeLayerSelected = EnumProperty(items = bgee_config.bgeeCurrentLayers, name = "Type")
+        bgee_config.update_bgee_components()
+        bpy.types.Object.BgeeComponentTypeSelected = EnumProperty(items = bgee_config.bgeeComponentTypes, name = "Type")
+        
+    def load_operators(self, context):
+        bpy.utils.register_class(bgee_publish.GameEditorPublish)
+        bpy.utils.register_class(bgee_tagslayers.GameEditorDeleteTag)
+        bpy.utils.register_class(bgee_tagslayers.GameEditorEditLayer)
+        bpy.utils.register_class(bgee_tagslayers.GameEditorDeleteLayer)
+        bpy.utils.register_class(bgee_tagslayers.AddTag)
+        bpy.utils.register_class(bgee_tagslayers.AddLayer)
+        bpy.utils.register_class(bgee_tagslayers.UpdateLayers)
+        bpy.utils.register_class(bgee_tagslayers.UpdateTags)
+        bpy.utils.register_class(bgee_tagslayers.GameEditorEditTag)
+        bpy.utils.register_class(bgee_input.CreateInputKey)
+        bpy.utils.register_class(bgee_input.CreateInputGroup)
+        bpy.utils.register_class(bgee_entity.BGEE_OT_multiselection)
+        bpy.utils.register_class(bgee_entity.BGEE_OT_add_entity_layer)
+        bpy.utils.register_class(bgee_component.BGEE_OT_update_component_type_selector)
+        bpy.utils.register_class(bgee_component.DeleteComponent)
+        bpy.utils.register_class(bgee_component.CreateComponent)
+        bpy.utils.register_class(GameEditorPlay)
+        
+    def load_panels(self, context):
+        bpy.utils.register_class(GameEditorPanel)
+        bpy.utils.register_class(bgee_audio.GameEditorAudioPanel)
+        bpy.utils.register_class(bgee_publish.GameEditorPublishPanel)
+        bpy.utils.register_class(bgee_tagslayers.GameEditorTagsPanel)
+        bpy.utils.register_class(bgee_input.GameEditorInputPanel)
+        bpy.utils.register_class(bgee_entity.GameEditorEntityPanel)
+        bpy.utils.register_class(bgee_data.GameEditorDataPanel)
+        bpy.utils.register_class(bgee_component.GameEditorComponentsPanel)
+        
     def execute(self, context):
         if (bpy.ops.bgee.load_workspace() == {"FINISHED"}):
-            # Registering publishing classes
-            bpy.utils.register_class(bgee_publish.PlatformTarget)
-            bpy.utils.register_class(bgee_publish.GameEditorPublish)
-            # Registering gamemanager classes
             bpy.utils.register_class(CreateGameManager)
+            self.load_types(context)
+            self.load_operators(context)
+            self.load_panels(context)
             bpy.ops.bgee.create_gamemanager()
-            bpy.utils.unregister_class(CreateGameManager)
-            # Registering gamemanager and publishing panels
-            bpy.utils.register_class(GameEditorPlay)
-            bpy.utils.register_class(GameEditorPanel)
-            bpy.utils.register_class(bgee_publish.GameEditorPublishPanel)
-            bpy.utils.register_class(bgee_audio.GameEditorAudioPanel)
-            # Registering tags and layers operators/panels
-            bpy.utils.register_class(bgee_tagslayers.GameEditorEditTag)
-            bpy.utils.register_class(bgee_tagslayers.GameEditorDeleteTag)
-            bpy.utils.register_class(bgee_tagslayers.GameEditorEditLayer)
-            bpy.utils.register_class(bgee_tagslayers.GameEditorDeleteLayer)
-            bpy.utils.register_class(bgee_tagslayers.AddTag)
-            bpy.utils.register_class(bgee_tagslayers.AddLayer)
-            bpy.utils.register_class(bgee_tagslayers.UpdateLayers)
-            bpy.utils.register_class(bgee_tagslayers.UpdateTags)
-            bpy.utils.register_class(bgee_tagslayers.GameEditorTagsPanel)
-            # Registering input operators/panels
-            bpy.utils.register_class(bgee_input.CreateInputKey)
-            bpy.utils.register_class(bgee_input.CreateInputGroup)
-            bpy.utils.register_class(bgee_input.GameEditorInputPanel)
-            # Registering entity operators/panels
-            #bpy.utils.register_class(bgee_entity.EntityList)
-            bpy.utils.register_class(bgee_entity.GameEditorEntityPanel)
-            
+                        
             return {"FINISHED"}
         else:
             print("Game editor not loaded")
@@ -139,32 +169,6 @@ class CreateGameManager(bpy.types.Operator):
     bl_idname = "bgee.create_gamemanager"
     bl_label = "Create GameManager"
     
-    def load_classes(self, context):
-        bpy.utils.register_class(bgee_tagslayers.TagItem)
-        bpy.utils.register_class(bgee_tagslayers.LayerItem)
-        bpy.utils.register_class(bgee_input.InputKey)
-        bpy.utils.register_class(bgee_input.InputGroup)
-        bpy.utils.register_class(bgee_entity.MultiEntityTransform)
-        bpy.utils.register_class(bgee_entity.BGEE_OT_multiselection)
-        bpy.utils.register_class(bgee_component.ObjectComponent) # Needed by EntityProperties
-        bpy.utils.register_class(bgee_entity.EntityProperties)
-        bpy.types.Object.entityProps = PointerProperty(type=bgee_entity.EntityProperties)                    
-        bpy.utils.register_class(bgee_component.DeleteComponent)
-        bpy.utils.register_class(bgee_component.GameEditorComponentsPanel)
-        
-    def load_types(self, context):
-        bpy.types.Object.GameName = StringProperty(name="Game Name")
-        bpy.types.Object.Version = IntVectorProperty(name="Version")
-        bpy.types.Object.Workspace = StringProperty(name="Workspace")
-        bpy.types.Scene.BgeeActive = BoolProperty(name="")
-        bpy.types.Object.BgeeTarget = PointerProperty(type=bgee_publish.PlatformTarget)
-        bpy.types.Object.AudioVolume = IntProperty(name="Audio volume")
-        bpy.types.Object.currentTags = CollectionProperty(type=bgee_tagslayers.TagItem)
-        bpy.types.Object.currentLayers = CollectionProperty(type=bgee_tagslayers.LayerItem)
-        bpy.types.Object.currentInputs = CollectionProperty(type=bgee_input.InputGroup)
-        bpy.types.Object.entityTransform = PointerProperty(type=bgee_entity.MultiEntityTransform)
-        bpy.types.Object.entityProps = PointerProperty(type=bgee_entity.EntityProperties)
-        
     def create_properties(self, context):
         # Config gamemanager properties
         # General
@@ -198,21 +202,19 @@ class CreateGameManager(bpy.types.Operator):
         ao.entityTransform.location, ao.entityTransform.rotation, ao.entityTransform.scale = (0,0,0), (0,0,0), (1,1,1)
         bpy.ops.bgee.multiselection()
         # Entity properties
-        bgee_entity.prepare_entity(context.blend_data.objects)
-
-        # Components
+        bgee_gamemanager.prepare_entity(context.blend_data.objects)
+        bgee_gamemanager.prepare_scene(context.blend_data.scenes)
         
-        '''
-        bpy.types.Object.BgeeComponentType = EnumProperty(items = bgee_config.bgeeComponentTypes, name = "Type")
-        ao.BgeeComponentType = "Physics"
-        bpy.utils.register_class(bgee_input.InputGroup)
-        bpy.types.Object.BgeeInputs = CollectionProperty(type=bgee_input.InputGroup)
-        bpy.utils.register_class(bgee_publish.PlatformTarget)
-        '''
+        # Components
+        if (len(bgee_config.bgeeComponentTypes) > 0):
+            compTypeTuple = bgee_config.bgeeComponentTypes[0]
+            ao.BgeeComponentTypeSelected = compTypeTuple[0]
+        
+        # GameManager tag
+        aoLayer = ao.entityProps.layers.add()
+        aoLayer = "None"
         
     def execute(self, context):
-        self.load_classes(context)
-        self.load_types(context)
         global bgeeManager
         bgeeManager = bgee_gamemanager.GameManager()
         gmExists = False
@@ -230,7 +232,10 @@ class CreateGameManager(bpy.types.Operator):
             # bgeeManager.emptyObject.hide = True 
             bgeeManager.emptyObject.Workspace = os.path.normpath((os.path.join(os.path.dirname(bpy.data.filepath), (bpy.path.basename(bpy.data.filepath)).replace(".blend", "_") + bgee_config.GAME_EDITOR_WORKSPACE_PATH)))
         else:
-            bgee_entity.prepare_entity(context.blend_data.objects)
+            bgee_tagslayers.update_tags(bgeeManager.emptyObject)  
+            bgee_tagslayers.update_layers(bgeeManager.emptyObject)
+            bgee_gamemanager.prepare_entity(context.blend_data.objects)
+            bgee_gamemanager.prepare_scene(context.blend_data.scenes)
         
         return {"FINISHED"}
 

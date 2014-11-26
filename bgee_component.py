@@ -19,15 +19,45 @@
 import bpy
 from . import bgee_config
 
+import os
+import shutil
+
+class BGEE_OT_update_component_type_selector(bpy.types.Operator):
+    bl_idname = "bgee.update_component_type_selector"
+    bl_label = ""
+    
+    def execute(self, context):
+        bgee_config.update_bgee_components()
+        gm = context.blend_data.objects["GameManager"]
+        bpy.types.Object.BgeeComponentTypeSelected = EnumProperty(items = bgee_config.bgeeComponentTypes, name = "Type")
+        
+        return {"FINISHED"}
+
+class ComponentScriptIntegerProperty(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty()
+    value = bpy.props.IntegerProperty()
+    
+class ComponentScriptFloatProperty(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty()
+    value = bpy.props.FloatProperty()
+
+class ComponentScriptStringProperty(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty()
+    value = bpy.props.StringProperty()
+
+class ComponentScriptBooleanProperty(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty()
+    value = bpy.props.BoolProperty()
+
 class ObjectComponent(bpy.types.PropertyGroup):
     cActive = bpy.props.BoolProperty(name="", description="Active", default=True)
     cType = bpy.props.StringProperty(name="Component", default="Unknown")
     cScript = bpy.props.StringProperty(name="Script", default="Script")
     cName = bpy.props.StringProperty(name="", default="Name")                    
-    cInput = bpy.props.StringProperty(name = "Input", default="Input1")
-    cScriptProperties = list()
-    #input = bpy.props.EnumProperty(items = bgeeInputsMenu, name = "Input")
-    #input = "None"
+    cScriptIntegerProperties = bpy.props.CollectionProperty(type=ComponentScriptIntegerProperty)
+    cScriptFloatProperties = bpy.props.CollectionProperty(type=ComponentScriptFloatProperty)
+    cScriptStringProperties = bpy.props.CollectionProperty(type=ComponentScriptStringProperty)
+    cScriptBooleanProperties = bpy.props.CollectionProperty(type=ComponentScriptBooleanProperty)
 
 class GameEditorComponentsPanel(bpy.types.Panel):
     bl_idname = "bgee_components_panel"
@@ -41,10 +71,11 @@ class GameEditorComponentsPanel(bpy.types.Panel):
         return (context.selected_objects)
 
     def draw(self, context):
+        gm = context.blend_data.objects["GameManager"]
         layout = self.layout
-        #row = layout.row(align=True)
-        #row.prop(context.screen, "bgeeComponentType")
-        #row.operator("bgee.create_component", "Add")
+        row = layout.row(align=True)
+        row.prop(gm, "BgeeComponentTypeSelected")
+        row.operator("bgee.create_component", "Add")
         if (len(context.selected_objects) > 1):
             for ob in context.selected_objects:
                 if (ob.is_property_set("entityProps")):
@@ -57,12 +88,12 @@ class GameEditorComponentsPanel(bpy.types.Panel):
                             row.operator("bgee.delete_component", icon="X")
                             row = box.row(align=True)
                             row.prop(comp, "cActive")
-                            row.label(comp.type)
+                            row.label(text=comp.cType)
                             row.prop(comp, "cName")
         else:
             if ("entityProps" in context.active_object.keys()):
                 if (context.active_object.entityProps.components):
-                    for comp in context.active_object.entityProps.components:
+                    for compIndex,comp in enumerate(context.active_object.entityProps.components):
                         row = layout.row(align=True)
                         box = row.box()
                         row = box.row(align=True)
@@ -70,13 +101,14 @@ class GameEditorComponentsPanel(bpy.types.Panel):
                         row.operator("bgee.delete_component", icon="X")
                         row = box.row(align=True)
                         row.prop(comp, "cActive")
-                        row.label(comp.type)
+                        row.label(text=comp.cType)
                         row.prop(comp, "cName")
                     
 
 class DeleteComponent(bpy.types.Operator):
     bl_idname = "bgee.delete_component"
     bl_label = ""
+    compID = None
     
     def execute(self, context):
         # TODO: How can I delete a component without reference in button/operator?
@@ -94,8 +126,11 @@ class CreateComponent(bpy.types.Operator):
         self.bgeeScriptLines = bgeeFile.readlines()
         bgeeFile.close()
         
-        # Create object game properties from bgeetypes lines
-        compo.scriptProperties.clear()
+        # Create entity bgee properties from bgeetypes lines
+        compo.cScriptIntegerProperties.clear()
+        compo.cScriptFloatProperties.clear()
+        compo.cScriptStringProperties.clear()
+        compo.cScriptBooleanProperties.clear()
         for line in self.bgeeScriptLines:
             #print(line)
             if (line.startswith("#")):
@@ -103,31 +138,32 @@ class CreateComponent(bpy.types.Operator):
             if ("bgeeInteger" in line):
                 lineSplitted = line.split(sep="=")
                 propName = lineSplitted[0].strip()
-                bpy.ops.object.game_property_new(type='INT', name=propName)
                 decPart = lineSplitted[1].split("(")
                 decPart = decPart[1].split(")")
                 decPart = decPart[0]
-                context.active_object.game.properties[propName].value = int(decPart)
-                compo.scriptProperties.append(propName)               
+                createdProp = compo.cScriptIntegerProperties.add()
+                createdProp.name = propName
+                createdProp.value = int(decPart)
             elif ("bgeeFloat" in line):
                 lineSplitted = line.split(sep="=")
                 propName = lineSplitted[0].strip()
-                bpy.ops.object.game_property_new(type='FLOAT', name=propName)
                 decPart = lineSplitted[1].split("(")
                 decPart = decPart[1].split(")")
                 decPart = decPart[0]
-                context.active_object.game.properties[propName].value = float(decPart)               
-                compo.scriptProperties.append(propName)               
+                createdProp = compo.cScriptFloatProperties.add()
+                createdProp.name = propName
+                createdProp.value = float(decPart)
             elif ("bgeeString" in line):
                 lineSplitted = line.split(sep="=")
                 propName = lineSplitted[0].strip()
-                bpy.ops.object.game_property_new(type='STRING', name=propName)
                 decPart = lineSplitted[1].split('("')
                 decPart = decPart[1].split('")')
                 decPart = decPart[0]
-                context.active_object.game.properties[propName].value = str(decPart)               
-                compo.scriptProperties.append(propName)               
-        
+                createdProp = compo.cScriptStringProperties.add()
+                createdProp.name = propName
+                createdProp.value = str(decPart)
+    
+    ''' TODO: CHECK IT IN PLAY OPERATOR  // APPLY LOGIC BRICKS IN PLAY OPERATOR TOO?  
     def create_bricks(self, context, compo):
         # For script
         bpy.ops.logic.sensor_add(type="ALWAYS", name=compo.type)
@@ -171,30 +207,34 @@ class CreateComponent(bpy.types.Operator):
                 elif ("jump" in splittedLine[0]):
                     sensorBrick.key = context.screen.bgeeInputs[compo.input].jump
                     actuatorBrick.use_character_jump = True        
-                ''' Deactivated Fire1
                 elif ("fire1" in splittedLine[0]):
                     sensorBrick.key = context.screen.bgeeInputs[compo.input].fire1
                     actuatorBrick.type = "EDIT_OBJECT"
                     actuatorBrick.mode = "ADDOBJECT"
                     actuatorBrick.linear_velocity = (0, context.active_object.game.properties["shotVelocity"].value,0)        
-                '''
             if (bgee_config.SCRIPT_SENSORS_BEGIN in line):
                 reading = True
             elif(bgee_config.SCRIPT_SENSORS_END in line):
                 reading = False
-        
+    '''
+                
     def execute(self, context):
-        component = context.active_object.Components.add()
-        component.type = context.screen.bgeeComponentType
-        wsp = context.screen.Workspace
-        try:
-            dstFilePath = os.path.join(wsp, bgee_config.GAME_EDITOR_WORKSPACE_SCRIPTS_PATH, component.type +  str(len(context.active_object.Components)) + ".py")
-            shutil.copy(os.path.join(wsp, bgee_config.GAME_EDITOR_WORKSPACE_TEMPLATES_PATH, (component.type  + ".py")), dstFilePath)
-        except:
-            print("Component cant be created")
-        else:
-            component.script = dstFilePath
-            print("component created!", component.script)
-            self.create_properties(context, dstFilePath, component)
-            self.create_bricks(context, component)
+        gm = context.blend_data.objects["GameManager"]
+        for ob in context.selected_objects:
+            component = context.active_object.entityProps.components.add()
+            component.cType = gm.BgeeComponentTypeSelected
+            wsp = gm.Workspace
+            try:
+                dstFilePath = os.path.join(wsp, bgee_config.GAME_EDITOR_WORKSPACE_SCRIPTS_PATH, component.cType +  str(len(context.active_object.entityProps.components)) + ".py")
+                if (os.path.exists(dstFilePath)):
+                    print("File exists in scripts dir")
+                else:
+                    shutil.copy(os.path.join(wsp, bgee_config.GAME_EDITOR_WORKSPACE_TEMPLATES_PATH, (component.cType  + ".py")), dstFilePath)
+            except:
+                print("Component cant be created")
+            else:
+                component.cScript = bpy.path.relpath(dstFilePath)
+                print("component created!", component.cScript)
+                #self.create_properties(context, dstFilePath, component)
+                #self.create_bricks(context, component)
         return {'FINISHED'}

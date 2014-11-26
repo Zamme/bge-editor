@@ -24,21 +24,24 @@ from bpy.props import *
 # Tags classes/functions
 def reset_tags(gm):
     gm.currentTags.clear()
+    bgee_config.bgeeCurrentTags.clear()
     for tag in bgee_config.DEFAULT_TAGS:
         newTag = gm.currentTags.add()
         newTag.first = tag[0]
         newTag.second = tag[1]
         newTag.third = tag[2]
+        bgee_config.bgeeCurrentTags.append((tag[0], tag[1], tag[2]))
     #print("Reset tags:", gm.currentTags)
 
 def update_tags(gm):
-    tags = list()
-    tags.clear()
+    bgee_config.bgeeCurrentTags.clear()
     for tag in gm.currentTags:
-        tags.append((tag.first, tag.second, tag.third))
-    bpy.types.Object.Tags = EnumProperty(items = tags)
+        bgee_config.bgeeCurrentTags.append((tag.first, tag.second, tag.third))
+    bpy.types.Object.Tags = EnumProperty(items = bgee_config.bgeeCurrentTags)
     #print("update tags:", tags)
     gm.Tags = "None"
+    bpy.types.Object.tagSelected = EnumProperty(items=bgee_config.bgeeCurrentTags)
+    gm.tagSelected = "None"
     
 class TagItem(bpy.types.PropertyGroup):
     first = bpy.props.StringProperty(name="")
@@ -49,21 +52,24 @@ class TagItem(bpy.types.PropertyGroup):
 # Layers classes/functions
 def reset_layers(gm):
     gm.currentLayers.clear()
+    bgee_config.bgeeCurrentLayers.clear()
     for lay in bgee_config.DEFAULT_LAYERS:
         newLayer = gm.currentLayers.add()
         newLayer.first = lay[0]
         newLayer.second = lay[1]
         newLayer.third = lay[2]
+        bgee_config.bgeeCurrentLayers.append((lay[0], lay[1], lay[2]))
     #print("Reset newLayer:", gm.currentLayers)
 
 def update_layers(gm):
-    layers = list()
-    layers.clear()
+    bgee_config.bgeeCurrentLayers.clear()
     for lay in gm.currentLayers:
-        layers.append((lay.first, lay.second, lay.third))
-    bpy.types.Object.Layers = EnumProperty(items = layers)
+        bgee_config.bgeeCurrentLayers.append((lay.first, lay.second, lay.third))
+    bpy.types.Object.Layers = EnumProperty(items = bgee_config.bgeeCurrentLayers)
     #print("update layers:", layers)
     gm.Layers = "None"
+    bpy.types.Object.layerSelected = EnumProperty(items=bgee_config.bgeeCurrentTags)
+    gm.tagSelected = "None"
     
 class LayerItem(bpy.types.PropertyGroup):
     first = bpy.props.StringProperty(name="")

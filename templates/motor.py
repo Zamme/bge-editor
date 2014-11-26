@@ -1,3 +1,5 @@
+# BGEE_Component
+
 # Motor.py
 
 import GmTypes

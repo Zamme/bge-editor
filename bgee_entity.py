@@ -37,6 +37,28 @@ class GameEditorEntityPanel(bpy.types.Panel):
         for ob in context.selected_objects:
             boxrow = box.row(align=True)
             boxrow.label(text=ob.name)
+            boxrow.prop(ob.entityProps, "active")
+            boxrow = box.row(align=True)
+            boxrow.prop(ob.entityProps, "prefab")
+            boxrow = box.row(align=True)
+            if (len(context.selected_objects) > 1):
+                # Check tag equals
+                pass
+            else:
+                boxrow.label("Tag:")
+                boxrow.prop(context.active_object, "bgeeTag")
+                boxrow = box.row(align=True)
+                boxrow.label("Layers:")
+                boxcolumn = boxrow.column(align=True)
+                for lay in context.active_object.entityProps.layers:
+                    boxrowcolumn = boxcolumn.row(align=True)
+                    boxrowcolumn.label(lay.first)
+                boxrowcolumn = boxcolumn.row(align=True)
+                boxrowcolumn.prop(gm, "bgeeLayer")
+                addOp = boxrowcolumn.operator("bgee.add_entity_layer", "Add")
+                addOp.selectedEntity = ob.name
+                addOp.selectedLayer = gm.bgeeLayer
+                
         row = layout.row(align=True)
         row.prop(gm.entityTransform, "location")
         row = layout.row(align=True)
@@ -130,27 +152,34 @@ class BGEE_OT_multiselection(bpy.types.Operator):
 
 # ENTITY PROPERTIES
 class EntityProperties(bpy.types.PropertyGroup):
-    active = bpy.props.BoolProperty(default=True)
-    prefab = bpy.props.BoolProperty(default=False)
-    tag = bpy.props.PointerProperty(type=bgee_tagslayers.TagItem)
+    active = bpy.props.BoolProperty(default=True, name="Active")
+    prefab = bpy.props.BoolProperty(default=False, name="Prefab")
+    #tag = bpy.props.EnumProperty(items=bgee_config.bgeeCurrentTags)
     layers = bpy.props.CollectionProperty(type=bgee_tagslayers.LayerItem)
     components = bpy.props.CollectionProperty(type=bgee_component.ObjectComponent)
 
-# Create entity bgee properties (IT MUST BE A LIST!)
-def prepare_entity(oblist):
-    obList = oblist
-    if (obList != None):
-        for ob in obList:
-            if (ob.name != "GameManager"):
-                if (not("entityProps" in ob.keys())):
-                    ob.entityProps.active = True
-                    ob.entityProps.prefab = False
-                    ob.entityProps.tag.first = "None"
-                    ob.entityProps.tag.second = "None"
-                    ob.entityProps.tag.third = "None"
-                    oLayer = ob.entityProps.layers.add()
-                    oLayer = "None"
+class BGEE_OT_add_entity_layer(bpy.types.Operator):
+    bl_idname = "bgee.add_entity_layer"
+    bl_label = "Add Entity Layer"
+    selectedLayer = bpy.props.StringProperty()
+    selectedEntity = bpy.props.StringProperty()
+    
+    def execute(self, context):
+        entity = bpy.data.objects[self.selectedEntity]
+        # If None is present
+        if (len(entity.entityProps.layers) > 0):
+            if (entity.entityProps.layers[0].first == "None"):
+                entity.entityProps.layers.remove(0)
+        # If None is selected
+        if (self.selectedLayer == "None"):
+            while (len(entity.entityProps.layers) > 0):
+                entity.entityProps.layers.remove(0)
+        addedLayer = entity.entityProps.layers.add()
+        addedLayer.first, addedLayer.second, addedLayer.third = self.selectedLayer, self.selectedLayer, self.selectedLayer
             
+        return {'FINISHED'}
+
+
 
 ''' COMING SOON        
 class EntityList(bpy.types.UIList):
