@@ -17,7 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
-from . import bgee_config
+from . import bgee_config, bgee_script_reader
 
 import os
 import shutil
@@ -29,21 +29,21 @@ class BGEE_OT_update_component_type_selector(bpy.types.Operator):
     def execute(self, context):
         bgee_config.update_bgee_components()
         gm = context.blend_data.objects["GameManager"]
-        bpy.types.Object.BgeeComponentTypeSelected = EnumProperty(items = bgee_config.bgeeComponentTypes, name = "Type")
+        bpy.types.Object.BgeeComponentTypeSelected = bpy.props.EnumProperty(items = bgee_config.bgeeComponentTypes, name = "Type")
         
         return {"FINISHED"}
 
 class ComponentScriptIntegerProperty(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty()
-    value = bpy.props.IntegerProperty()
+    value = bpy.props.IntProperty()
     
 class ComponentScriptFloatProperty(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty()
     value = bpy.props.FloatProperty()
 
 class ComponentScriptStringProperty(bpy.types.PropertyGroup):
-    name = bpy.props.StringProperty()
-    value = bpy.props.StringProperty()
+    name = bpy.props.StringProperty(name="")
+    value = bpy.props.StringProperty(name="")
 
 class ComponentScriptBooleanProperty(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty()
@@ -98,20 +98,39 @@ class GameEditorComponentsPanel(bpy.types.Panel):
                         box = row.box()
                         row = box.row(align=True)
                         row.alignment = "RIGHT"
-                        row.operator("bgee.delete_component", icon="X")
+                        delParameters = row.operator("bgee.delete_component", icon="X")
+                        delParameters.entName = context.active_object.name
+                        delParameters.compID = compIndex
                         row = box.row(align=True)
                         row.prop(comp, "cActive")
                         row.label(text=comp.cType)
                         row.prop(comp, "cName")
+                        for compProp in comp.cScriptIntegerProperties:
+                            row = box.row(align=True)
+                            row.label(compProp.name)
+                            row.prop(compProp, "value")
+                        for compProp in comp.cScriptFloatProperties:
+                            row = box.row(align=True)
+                            row.label(compProp.name)
+                            row.prop(compProp, "value")
+                        for compProp in comp.cScriptStringProperties:
+                            row = box.row(align=True)
+                            row.label(compProp.name)
+                            row.prop(compProp, "value")
+                        for compProp in comp.cScriptBooleanProperties:
+                            row = box.row(align=True)
+                            row.label(compProp.name)
+                            row.prop(compProp, "value")
                     
 
 class DeleteComponent(bpy.types.Operator):
     bl_idname = "bgee.delete_component"
     bl_label = ""
-    compID = None
+    compID = bpy.props.IntProperty()
+    entName = bpy.props.StringProperty()
     
     def execute(self, context):
-        # TODO: How can I delete a component without reference in button/operator?
+        bpy.data.objects[self.entName].entityProps.components.remove(self.compID)
         print("component deleted!")
         
         return {"FINISHED"}
@@ -121,47 +140,26 @@ class CreateComponent(bpy.types.Operator):
     bl_label = 'Create Component'
 
     def create_properties(self, context, fp, compo):
-        # Read bgeescript file
-        bgeeFile = open(fp, "r")
-        self.bgeeScriptLines = bgeeFile.readlines()
-        bgeeFile.close()
-        
         # Create entity bgee properties from bgeetypes lines
         compo.cScriptIntegerProperties.clear()
         compo.cScriptFloatProperties.clear()
         compo.cScriptStringProperties.clear()
         compo.cScriptBooleanProperties.clear()
-        for line in self.bgeeScriptLines:
-            #print(line)
-            if (line.startswith("#")):
-                continue
-            if ("bgeeInteger" in line):
-                lineSplitted = line.split(sep="=")
-                propName = lineSplitted[0].strip()
-                decPart = lineSplitted[1].split("(")
-                decPart = decPart[1].split(")")
-                decPart = decPart[0]
+        
+        sCatch = bgee_script_reader.BGEE_ScriptCatch(fp)
+        sProps = sCatch.get_properties()
+        
+        for prop in sProps:
+            if (prop.type == "BgeeInteger"):
                 createdProp = compo.cScriptIntegerProperties.add()
-                createdProp.name = propName
-                createdProp.value = int(decPart)
-            elif ("bgeeFloat" in line):
-                lineSplitted = line.split(sep="=")
-                propName = lineSplitted[0].strip()
-                decPart = lineSplitted[1].split("(")
-                decPart = decPart[1].split(")")
-                decPart = decPart[0]
+            elif (prop.type == "BgeeFloat"):
                 createdProp = compo.cScriptFloatProperties.add()
-                createdProp.name = propName
-                createdProp.value = float(decPart)
-            elif ("bgeeString" in line):
-                lineSplitted = line.split(sep="=")
-                propName = lineSplitted[0].strip()
-                decPart = lineSplitted[1].split('("')
-                decPart = decPart[1].split('")')
-                decPart = decPart[0]
+            elif (prop.type == "BgeeString"):
                 createdProp = compo.cScriptStringProperties.add()
-                createdProp.name = propName
-                createdProp.value = str(decPart)
+            elif (prop.type == "BgeeBoolean"):
+                createdProp = compo.cScriptBooleanProperties.add()
+            createdProp.name = prop.name
+            createdProp.value = prop.value
     
     ''' TODO: CHECK IT IN PLAY OPERATOR  // APPLY LOGIC BRICKS IN PLAY OPERATOR TOO?  
     def create_bricks(self, context, compo):
@@ -235,6 +233,6 @@ class CreateComponent(bpy.types.Operator):
             else:
                 component.cScript = bpy.path.relpath(dstFilePath)
                 print("component created!", component.cScript)
-                #self.create_properties(context, dstFilePath, component)
+                self.create_properties(context, dstFilePath, component)
                 #self.create_bricks(context, component)
         return {'FINISHED'}

@@ -141,16 +141,12 @@ def update_bgee_components():
         bgeeComponentTypes.clear()
         templatesPath = os.path.join(os.path.normpath((os.path.join(os.path.dirname(bpy.data.filepath), (bpy.path.basename(bpy.data.filepath)).replace(".blend", "_") + GAME_EDITOR_WORKSPACE_PATH))), GAME_EDITOR_WORKSPACE_TEMPLATES_PATH)
         templateFiles = os.listdir(templatesPath)
-        #print(templateFiles)
+        print(templateFiles)
         for tFileName in templateFiles:
             if (tFileName.endswith(".py")):
-                tFile = open(os.path.join(templatesPath, tFileName), mode='r', buffering=1)
-                firstSentence = tFile.readline()
-                tFile.close()
-                if (SCRIPT_FILE_BEGIN in firstSentence):
-                    option = tFileName.replace(".py", "")
-                    bgeeComponentTypes.append((option, option, option))
-                    print(tFileName.replace(".py", ""), "added to components")
+                option = tFileName.replace(".py", "")
+                bgeeComponentTypes.append((option, option, option))
+                print(tFileName.replace(".py", ""), "added to components")
     except:
         print("Error updating components")
     else:

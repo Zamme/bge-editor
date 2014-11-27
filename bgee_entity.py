@@ -50,9 +50,14 @@ class GameEditorEntityPanel(bpy.types.Panel):
                 boxrow = box.row(align=True)
                 boxrow.label("Layers:")
                 boxcolumn = boxrow.column(align=True)
-                for lay in context.active_object.entityProps.layers:
+                for layId,lay in enumerate(context.active_object.entityProps.layers):
                     boxrowcolumn = boxcolumn.row(align=True)
                     boxrowcolumn.label(lay.first)
+                    if (lay.first != "None"):
+                        remParam = boxrowcolumn.operator("bgee.remove_entity_layer", icon="X")
+                        remParam.selectedLayer = layId
+                        remParam.selectedEntity = context.active_object.name
+                boxcolumn.separator()
                 boxrowcolumn = boxcolumn.row(align=True)
                 boxrowcolumn.prop(gm, "bgeeLayer")
                 addOp = boxrowcolumn.operator("bgee.add_entity_layer", "Add")
@@ -166,19 +171,39 @@ class BGEE_OT_add_entity_layer(bpy.types.Operator):
     
     def execute(self, context):
         entity = bpy.data.objects[self.selectedEntity]
-        # If None is present
-        if (len(entity.entityProps.layers) > 0):
-            if (entity.entityProps.layers[0].first == "None"):
-                entity.entityProps.layers.remove(0)
-        # If None is selected
-        if (self.selectedLayer == "None"):
-            while (len(entity.entityProps.layers) > 0):
-                entity.entityProps.layers.remove(0)
-        addedLayer = entity.entityProps.layers.add()
-        addedLayer.first, addedLayer.second, addedLayer.third = self.selectedLayer, self.selectedLayer, self.selectedLayer
+        # If same layer in dont add
+        same = False
+        for lay in entity.entityProps.layers:
+            if (self.selectedLayer == lay.first):
+                same = True
+        if (not same):
+            # If None is present
+            if (len(entity.entityProps.layers) > 0):
+                if (entity.entityProps.layers[0].first == "None"):
+                    entity.entityProps.layers.remove(0)
+            # If None is selected
+            if (self.selectedLayer == "None"):
+                while (len(entity.entityProps.layers) > 0):
+                    entity.entityProps.layers.remove(0)
+            addedLayer = entity.entityProps.layers.add()
+            addedLayer.first, addedLayer.second, addedLayer.third = self.selectedLayer, self.selectedLayer, self.selectedLayer
             
         return {'FINISHED'}
 
+class BGEE_OT_remove_entity_layer(bpy.types.Operator):
+    bl_idname = "bgee.remove_entity_layer"
+    bl_label = ""
+    selectedLayer = bpy.props.IntProperty()
+    selectedEntity = bpy.props.StringProperty()
+    
+    def execute(self, context):
+        entity = bpy.data.objects[self.selectedEntity]
+        entity.entityProps.layers.remove(self.selectedLayer)
+        if (len(entity.entityProps.layers) < 1):
+            noneLayer = entity.entityProps.layers.add()
+            noneLayer.first, noneLayer.second, noneLayer.third = "None", "None", "None"
+            
+        return {'FINISHED'}
 
 
 ''' COMING SOON        

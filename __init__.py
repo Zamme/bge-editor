@@ -40,7 +40,7 @@ if "bpy" in locals():
     imp.reload(bgee_trigger)
     imp.reload(bgee_audio)
 else:
-    from . import bgee_types, bgee_collider, bgee_component, bgee_config, bgee_data, bgee_entity, bgee_gamemanager, bgee_input, bgee_publish, bgee_tagslayers, bgee_trigger, bgee_audio #, bgee_layout
+    from . import bgee_types, bgee_collider, bgee_component, bgee_config, bgee_data, bgee_entity, bgee_gamemanager, bgee_input, bgee_publish, bgee_tagslayers, bgee_trigger, bgee_audio, bgee_script_reader #, bgee_layout
 
 import bpy
 from bpy.props import *
@@ -101,6 +101,10 @@ class LoadGameEditor(bpy.types.Operator):
         bpy.utils.register_class(bgee_tagslayers.LayerItem)
         bpy.utils.register_class(bgee_input.InputKey)
         bpy.utils.register_class(bgee_input.InputGroup)
+        bpy.utils.register_class(bgee_component.ComponentScriptIntegerProperty)
+        bpy.utils.register_class(bgee_component.ComponentScriptFloatProperty)
+        bpy.utils.register_class(bgee_component.ComponentScriptStringProperty)
+        bpy.utils.register_class(bgee_component.ComponentScriptBooleanProperty)
         bpy.utils.register_class(bgee_entity.MultiEntityTransform)
         bpy.utils.register_class(bgee_component.ObjectComponent) # Needed by EntityProperties
         bpy.utils.register_class(bgee_entity.EntityProperties)
@@ -118,9 +122,9 @@ class LoadGameEditor(bpy.types.Operator):
         bpy.types.Object.entityTransform = PointerProperty(type=bgee_entity.MultiEntityTransform)
         bpy.types.Object.bgeeTag = EnumProperty(items=bgee_config.bgeeCurrentTags, name="")
         bpy.types.Object.bgeeLayer = EnumProperty(items=bgee_config.bgeeCurrentLayers, name="")
-        #bpy.types.Object.BgeeLayerSelected = EnumProperty(items = bgee_config.bgeeCurrentLayers, name = "Type")
         bgee_config.update_bgee_components()
         bpy.types.Object.BgeeComponentTypeSelected = EnumProperty(items = bgee_config.bgeeComponentTypes, name = "Type")
+        
         
     def load_operators(self, context):
         bpy.utils.register_class(bgee_publish.GameEditorPublish)
@@ -136,6 +140,7 @@ class LoadGameEditor(bpy.types.Operator):
         bpy.utils.register_class(bgee_input.CreateInputGroup)
         bpy.utils.register_class(bgee_entity.BGEE_OT_multiselection)
         bpy.utils.register_class(bgee_entity.BGEE_OT_add_entity_layer)
+        bpy.utils.register_class(bgee_entity.BGEE_OT_remove_entity_layer)
         bpy.utils.register_class(bgee_component.BGEE_OT_update_component_type_selector)
         bpy.utils.register_class(bgee_component.DeleteComponent)
         bpy.utils.register_class(bgee_component.CreateComponent)

@@ -45,3 +45,9 @@ class BgeeFloat(BgeeType):
         self.value = val
         self.type = "bgeefloat"
                     
+class BgeeBoolean(BgeeType):
+    
+    def __init__(self, val = False):
+        self.value = val
+        self.type = "bgeeboolean"
+                    
