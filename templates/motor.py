@@ -20,19 +20,20 @@
 
 # Motor.py
 
-import GmTypes
+from bgee_types import *
 
 # BeginBgeeProperties
-velocity = GmTypes.GmFloat(0.1)
-angularVelocity = GmTypes.GmFloat(0.01)
-name = GmTypes.GmString("motor")
-lives = GmTypes.GmInteger(3)
-proyectile = GmTypes.GmString("proyectile")
-shotVelocity = GmTypes.GmFloat(0.5)
+velocity = BgeeFloat(0.1)
+angularVelocity = BgeeFloat(0.01)
+name = BgeeString("motor")
+lives = BgeeInteger(3)
+proyectile = BgeeString("proyectile")
+shotVelocity = BgeeFloat(0.5)
+dead = BgeeBoolean(False)
+entity1 = BgeeEntity()
+material1 = BgeeMaterial()
+texture1 = BgeeTexture()
 # EndBgeeProperties
-
-import bge
-import bpy
 
 #BeginSensors
 left = "KeyboardLeftSensor"

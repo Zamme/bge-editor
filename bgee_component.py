@@ -28,10 +28,90 @@ class BGEE_OT_update_component_type_selector(bpy.types.Operator):
     
     def execute(self, context):
         bgee_config.update_bgee_components()
-        gm = context.blend_data.objects["GameManager"]
         bpy.types.Object.BgeeComponentTypeSelected = bpy.props.EnumProperty(items = bgee_config.bgeeComponentTypes, name = "Type")
         
         return {"FINISHED"}
+
+'''
+class BGEE_OT_update_current_entities_selector(bpy.types.Operator):
+    bl_idname = "bgee.update_current_entities_selector"
+    bl_label = ""
+    
+    def execute(self, context):
+        bgee_config.update_current_entities()
+        bpy.types.Object.BgeeCurrentEntitySelected = bpy.props.EnumProperty(items = bgee_config.bgeeCurrentEntities, name="Entity")
+        
+        return {"FINISHED"}
+'''
+
+class BGEE_OT_select_entity(bpy.types.Operator):
+    bl_idname="bgee.select_entity"
+    bl_label = 'Select'
+    bl_property = "toEntity"
+    
+    selectedEntity = bpy.props.StringProperty()
+    selectedComponent = bpy.props.IntProperty()
+    selectedProp = bpy.props.IntProperty()
+    
+    def entities(self, context):
+        return [(ent.name, ent.name, "") for ent in bpy.data.objects]
+    
+    toEntity = bpy.props.EnumProperty(items=entities)
+
+    def execute(self, context):
+        bpy.data.objects[self.selectedEntity].entityProps.components[self.selectedComponent].cScriptEntityProperties[self.selectedProp].value = self.toEntity
+        
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        context.window_manager.invoke_search_popup(self)
+        return {'FINISHED'}
+
+class BGEE_OT_select_material(bpy.types.Operator):
+    bl_idname="bgee.select_material"
+    bl_label = 'Select'
+    bl_property = "toMaterial"
+    
+    selectedEntity = bpy.props.StringProperty()
+    selectedComponent = bpy.props.IntProperty()
+    selectedProp = bpy.props.IntProperty()
+    
+    def materials(self, context):
+        return [(mat.name, mat.name, "") for mat in bpy.data.materials]
+    
+    toMaterial = bpy.props.EnumProperty(items=materials)
+
+    def execute(self, context):
+        bpy.data.objects[self.selectedEntity].entityProps.components[self.selectedComponent].cScriptMaterialProperties[self.selectedProp].value = self.toMaterial
+        
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        context.window_manager.invoke_search_popup(self)
+        return {'FINISHED'}
+
+class BGEE_OT_select_texture(bpy.types.Operator):
+    bl_idname="bgee.select_texture"
+    bl_label = 'Select'
+    bl_property = "toTexture"
+    
+    selectedEntity = bpy.props.StringProperty()
+    selectedComponent = bpy.props.IntProperty()
+    selectedProp = bpy.props.IntProperty()
+    
+    def textures(self, context):
+        return [(tex.name, tex.name, "") for tex in bpy.data.textures]
+    
+    toTexture = bpy.props.EnumProperty(items=textures)
+
+    def execute(self, context):
+        bpy.data.objects[self.selectedEntity].entityProps.components[self.selectedComponent].cScriptTextureProperties[self.selectedProp].value = self.toTexture
+        
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        context.window_manager.invoke_search_popup(self)
+        return {'FINISHED'}
 
 class ComponentScriptIntegerProperty(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty()
@@ -47,7 +127,19 @@ class ComponentScriptStringProperty(bpy.types.PropertyGroup):
 
 class ComponentScriptBooleanProperty(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty()
-    value = bpy.props.BoolProperty()
+    value = bpy.props.BoolProperty(name="")
+
+class ComponentScriptEntityProperty(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty(name="")
+    value = bpy.props.StringProperty(name="")
+
+class ComponentScriptMaterialProperty(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty(name="")
+    value = bpy.props.StringProperty(name="")
+
+class ComponentScriptTextureProperty(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty(name="")
+    value = bpy.props.StringProperty(name="")
 
 class ObjectComponent(bpy.types.PropertyGroup):
     cActive = bpy.props.BoolProperty(name="", description="Active", default=True)
@@ -58,6 +150,9 @@ class ObjectComponent(bpy.types.PropertyGroup):
     cScriptFloatProperties = bpy.props.CollectionProperty(type=ComponentScriptFloatProperty)
     cScriptStringProperties = bpy.props.CollectionProperty(type=ComponentScriptStringProperty)
     cScriptBooleanProperties = bpy.props.CollectionProperty(type=ComponentScriptBooleanProperty)
+    cScriptEntityProperties = bpy.props.CollectionProperty(type=ComponentScriptEntityProperty)
+    cScriptMaterialProperties = bpy.props.CollectionProperty(type=ComponentScriptMaterialProperty)
+    cScriptTextureProperties = bpy.props.CollectionProperty(type=ComponentScriptTextureProperty)
 
 class GameEditorComponentsPanel(bpy.types.Panel):
     bl_idname = "bgee_components_panel"
@@ -121,6 +216,30 @@ class GameEditorComponentsPanel(bpy.types.Panel):
                             row = box.row(align=True)
                             row.label(compProp.name)
                             row.prop(compProp, "value")
+                        for propId,compProp in enumerate(comp.cScriptEntityProperties):
+                            row = box.row(align=True)
+                            row.label(compProp.name)
+                            row.label(compProp.value)
+                            selEntOp = row.operator("bgee.select_entity", "Select")
+                            selEntOp.selectedEntity = context.active_object.name
+                            selEntOp.selectedComponent = compIndex
+                            selEntOp.selectedProp = propId
+                        for propId,compProp in enumerate(comp.cScriptMaterialProperties):
+                            row = box.row(align=True)
+                            row.label(compProp.name)
+                            row.label(compProp.value)
+                            selMatOp = row.operator("bgee.select_material", "Select")
+                            selMatOp.selectedEntity = context.active_object.name
+                            selMatOp.selectedComponent = compIndex
+                            selMatOp.selectedProp = propId
+                        for compProp in comp.cScriptTextureProperties:
+                            row = box.row(align=True)
+                            row.label(compProp.name)
+                            row.label(compProp.value)
+                            selTexOp = row.operator("bgee.select_texture", "Select")
+                            selTexOp.selectedEntity = context.active_object.name
+                            selTexOp.selectedComponent = compIndex
+                            selTexOp.selectedProp = propId
                     
 
 class DeleteComponent(bpy.types.Operator):
@@ -145,6 +264,9 @@ class CreateComponent(bpy.types.Operator):
         compo.cScriptFloatProperties.clear()
         compo.cScriptStringProperties.clear()
         compo.cScriptBooleanProperties.clear()
+        compo.cScriptEntityProperties.clear()
+        compo.cScriptMaterialProperties.clear()
+        compo.cScriptTextureProperties.clear()
         
         sCatch = bgee_script_reader.BGEE_ScriptCatch(fp)
         sProps = sCatch.get_properties()
@@ -158,6 +280,12 @@ class CreateComponent(bpy.types.Operator):
                 createdProp = compo.cScriptStringProperties.add()
             elif (prop.type == "BgeeBoolean"):
                 createdProp = compo.cScriptBooleanProperties.add()
+            elif (prop.type == "BgeeEntity"):
+                createdProp = compo.cScriptEntityProperties.add()
+            elif (prop.type == "BgeeMaterial"):
+                createdProp = compo.cScriptMaterialProperties.add()
+            elif (prop.type == "BgeeTexture"):
+                createdProp = compo.cScriptTextureProperties.add()
             createdProp.name = prop.name
             createdProp.value = prop.value
     

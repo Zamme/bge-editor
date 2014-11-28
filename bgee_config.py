@@ -34,8 +34,6 @@ GAME_EDITOR_TAB = GAME_EDITOR_LAYOUT_NAME
 
 DEFAULT_AUDIO_VOLUME = 1
 
-TEMP_GMTEMPLATES_PATH = "/Users/zamme8rosa/Desktop/GameEditor"
-
 DEFAULT_TAGS = [("None", "None", "None"),
         ("Player", "Player", "Player"),
         ("MainCamera", "MainCamera", "MainCamera"),
@@ -53,9 +51,6 @@ DEFAULT_INPUT = [("Left", "LEFT_ARROW"),
                  ("Fire", "LEFT_CTRL"),
                  ("Jump", "SPACE")]
 
-BGEE_OBJECT_TYPES = [("Object", "Object", "Object"),
-          ("Prefab", "Prefab", "Prefab")]
-
 BGEE_TRIGGER_TYPES = [("Near", "Near", "Near"),
                     ("Radar", "Radar", "Radar")]
 
@@ -66,6 +61,8 @@ bgeeInputsMenu = [("None", "None", "None"),]
 bgeeCurrentTags = list()
 
 bgeeCurrentLayers = list()
+
+bgeeCurrentEntities = list()
 
 class CreateWorkspace(bpy.types.Operator):
     bl_idname="bgee.create_workspace"
@@ -143,7 +140,7 @@ def update_bgee_components():
         templateFiles = os.listdir(templatesPath)
         print(templateFiles)
         for tFileName in templateFiles:
-            if (tFileName.endswith(".py")):
+            if (tFileName.endswith(".py") and (tFileName != "bgee_types.py")): # Avoid bgee_types and other files
                 option = tFileName.replace(".py", "")
                 bgeeComponentTypes.append((option, option, option))
                 print(tFileName.replace(".py", ""), "added to components")
@@ -152,6 +149,12 @@ def update_bgee_components():
     else:
         print("Components updated")
 
+def update_current_entities():
+    bgeeCurrentEntities.clear()
+    bgeeCurrentEntities.append(("None", "None", "None"))
+    for entity in bpy.data.objects:
+        bgeeCurrentEntities.append((entity.name, entity.name, entity.name))
+        
 class LoadWorkspace(bpy.types.Operator):
     bl_idname="bgee.load_workspace"
     bl_label = 'Load workspace'

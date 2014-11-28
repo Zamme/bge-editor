@@ -50,4 +50,23 @@ class BgeeBoolean(BgeeType):
     def __init__(self, val = False):
         self.value = val
         self.type = "bgeeboolean"
-                    
+
+# Special types for especific pointers
+
+class BgeeEntity(BgeeType):
+    ''' Name of an entity to use as a pointer'''
+    def __init__(self, val = ""):
+        self.value = val
+        self.type = "bgeeentity"
+
+class BgeeMaterial(BgeeType):
+    ''' Name of a material to use as a pointer'''
+    def __init__(self, val = ""):
+        self.value = val
+        self.type = "bgeematerial"
+
+class BgeeTexture(BgeeType):
+    ''' Name of a texture to use as a pointer'''
+    def __init__(self, val = ""):
+        self.value = val
+        self.type = "bgeetexture"

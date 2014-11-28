@@ -107,18 +107,27 @@ class BGEE_ScriptCatch():
             decPart = decPart[1].split(")")
             value = decPart[0]
             decType = None
-            if ("GmFloat" in line):
+            if ("BgeeFloat" in line):
                 decType = "BgeeFloat"
                 value = float(value)
-            elif ("GmInteger" in line):
+            elif ("BgeeInteger" in line):
                 decType = "BgeeInteger"
                 value = int(value)
-            elif ("GmString" in line):
+            elif ("BgeeString" in line):
                 decType = "BgeeString"
                 value = str(value.strip('"'))
-            elif ("GmBoolean" in line):
+            elif ("BgeeBoolean" in line):
                 decType = "BgeeBoolean"
                 value = self.translate_boolean(value)
+            elif ("BgeeEntity" in line):
+                decType = "BgeeEntity"
+                value = str(value.strip('"'))
+            elif ("BgeeMaterial" in line):
+                decType = "BgeeMaterial"
+                value = str(value.strip('"'))
+            elif ("BgeeTexture" in line):
+                decType = "BgeeTexture"
+                value = str(value.strip('"'))
                 
             self.add_property(TypeProperty(propName, decType, value))
             print("Added property:", propName, decType, value)

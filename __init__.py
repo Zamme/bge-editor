@@ -26,7 +26,6 @@ bl_info = {
 
 if "bpy" in locals():
     import imp
-    imp.reload(bgee_types)
     imp.reload(bgee_collider)
     imp.reload(bgee_component)
     imp.reload(bgee_config)
@@ -40,7 +39,7 @@ if "bpy" in locals():
     imp.reload(bgee_trigger)
     imp.reload(bgee_audio)
 else:
-    from . import bgee_types, bgee_collider, bgee_component, bgee_config, bgee_data, bgee_entity, bgee_gamemanager, bgee_input, bgee_publish, bgee_tagslayers, bgee_trigger, bgee_audio, bgee_script_reader #, bgee_layout
+    from . import bgee_collider, bgee_component, bgee_config, bgee_data, bgee_entity, bgee_gamemanager, bgee_input, bgee_publish, bgee_tagslayers, bgee_trigger, bgee_audio, bgee_script_reader #, bgee_layout
 
 import bpy
 from bpy.props import *
@@ -105,6 +104,9 @@ class LoadGameEditor(bpy.types.Operator):
         bpy.utils.register_class(bgee_component.ComponentScriptFloatProperty)
         bpy.utils.register_class(bgee_component.ComponentScriptStringProperty)
         bpy.utils.register_class(bgee_component.ComponentScriptBooleanProperty)
+        bpy.utils.register_class(bgee_component.ComponentScriptEntityProperty)
+        bpy.utils.register_class(bgee_component.ComponentScriptMaterialProperty)
+        bpy.utils.register_class(bgee_component.ComponentScriptTextureProperty)
         bpy.utils.register_class(bgee_entity.MultiEntityTransform)
         bpy.utils.register_class(bgee_component.ObjectComponent) # Needed by EntityProperties
         bpy.utils.register_class(bgee_entity.EntityProperties)
@@ -142,6 +144,10 @@ class LoadGameEditor(bpy.types.Operator):
         bpy.utils.register_class(bgee_entity.BGEE_OT_add_entity_layer)
         bpy.utils.register_class(bgee_entity.BGEE_OT_remove_entity_layer)
         bpy.utils.register_class(bgee_component.BGEE_OT_update_component_type_selector)
+        #bpy.utils.register_class(bgee_component.BGEE_OT_update_current_entities_selector)
+        bpy.utils.register_class(bgee_component.BGEE_OT_select_entity)
+        bpy.utils.register_class(bgee_component.BGEE_OT_select_material)
+        bpy.utils.register_class(bgee_component.BGEE_OT_select_texture)
         bpy.utils.register_class(bgee_component.DeleteComponent)
         bpy.utils.register_class(bgee_component.CreateComponent)
         bpy.utils.register_class(GameEditorPlay)
